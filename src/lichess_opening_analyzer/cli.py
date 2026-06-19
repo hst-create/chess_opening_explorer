@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import List, Optional
 
 from .analysis import analyze_moves
 from .explorer import ExplorerCache, LichessExplorerClient
@@ -36,7 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     pgn_path = args.pgn or args.download_to
     if args.pgn is None:

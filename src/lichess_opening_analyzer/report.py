@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
+from typing import List
 
 from .analysis import Finding
 
@@ -10,7 +11,7 @@ def percent(value: float) -> str:
     return f"{value * 100:.1f}%"
 
 
-def write_markdown(findings: list[Finding], output: Path, sort: str) -> None:
+def write_markdown(findings: List[Finding], output: Path, sort: str) -> None:
     ordered = sort_findings(findings, sort)
     lines = [
         "# Lichess Opening Analyzer Report",
@@ -28,7 +29,7 @@ def write_markdown(findings: list[Finding], output: Path, sort: str) -> None:
     output.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def write_csv(findings: list[Finding], output: Path, sort: str) -> None:
+def write_csv(findings: List[Finding], output: Path, sort: str) -> None:
     ordered = sort_findings(findings, sort)
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", newline="", encoding="utf-8") as handle:
@@ -48,7 +49,7 @@ def write_csv(findings: list[Finding], output: Path, sort: str) -> None:
             })
 
 
-def sort_findings(findings: list[Finding], sort: str) -> list[Finding]:
+def sort_findings(findings: List[Finding], sort: str) -> List[Finding]:
     if sort == "impact":
         return sorted(findings, key=lambda item: item.impact, reverse=True)
     return sorted(findings, key=lambda item: item.best_score - item.played_score, reverse=True)

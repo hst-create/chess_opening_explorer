@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Dict, Optional, Union
 
 import requests
 
 
-def download_games(username: str, output: Path, max_games: int | None = None, since: str | None = None, until: str | None = None) -> None:
-    params: dict[str, str | int | bool] = {"pgnInJson": False, "clocks": False, "evals": False, "opening": True}
+def download_games(username: str, output: Path, max_games: Optional[int] = None, since: Optional[str] = None, until: Optional[str] = None) -> None:
+    params: Dict[str, Union[str, int, bool]] = {"pgnInJson": False, "clocks": False, "evals": False, "opening": True}
     if max_games:
         params["max"] = max_games
     if since:

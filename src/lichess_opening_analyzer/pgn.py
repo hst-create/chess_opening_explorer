@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, TextIO
+from typing import Dict, Iterable, TextIO, Tuple
 
 import chess.pgn
 
@@ -49,8 +49,8 @@ def iter_occurrences(
             board.push(move)
 
 
-def aggregate_occurrences(occurrences: Iterable[MoveOccurrence]) -> dict[tuple[str, str], MoveAggregate]:
-    aggregates: dict[tuple[str, str], MoveAggregate] = {}
+def aggregate_occurrences(occurrences: Iterable[MoveOccurrence]) -> Dict[Tuple[str, str], MoveAggregate]:
+    aggregates: Dict[Tuple[str, str], MoveAggregate] = {}
     for occ in occurrences:
         key = (occ.fen, occ.move_uci)
         if key not in aggregates:
@@ -59,6 +59,6 @@ def aggregate_occurrences(occurrences: Iterable[MoveOccurrence]) -> dict[tuple[s
     return aggregates
 
 
-def aggregate_pgn(path: Path, username: str, color: str, max_fullmove: int) -> dict[tuple[str, str], MoveAggregate]:
+def aggregate_pgn(path: Path, username: str, color: str, max_fullmove: int) -> Dict[Tuple[str, str], MoveAggregate]:
     with path.open(encoding="utf-8") as handle:
         return aggregate_occurrences(iter_occurrences(handle, username, color, max_fullmove))

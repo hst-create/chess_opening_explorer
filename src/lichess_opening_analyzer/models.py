@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Dict, List
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,7 @@ class MoveAggregate:
     move_san: str
     color: str
     count: int = 0
-    plies: list[int] = field(default_factory=list)
+    plies: List[int] = field(default_factory=list)
 
     def add(self, occurrence: MoveOccurrence) -> None:
         self.count += 1
@@ -46,7 +46,7 @@ class ExplorerMove:
         return (decisive + 0.5 * self.draws) / self.total if self.total else 0.0
 
     @classmethod
-    def from_api(cls, payload: dict[str, Any]) -> "ExplorerMove":
+    def from_api(cls, payload: Dict[str, Any]) -> "ExplorerMove":
         return cls(
             uci=payload["uci"],
             san=payload.get("san") or payload["uci"],

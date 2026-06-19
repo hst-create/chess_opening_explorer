@@ -15,7 +15,7 @@ python -m pip install -e .
 
 ## Step-by-step setup
 
-These commands assume you have Git and Python 3.10+ installed. Replace `YOUR_GITHUB_NAME` and `YOUR_LICHESS_USERNAME` with your actual account names.
+These commands assume you have Git and Python 3.8+ installed. Replace `YOUR_GITHUB_NAME` and `YOUR_LICHESS_USERNAME` with your actual account names.
 
 1. Clone the repository from GitHub:
 
