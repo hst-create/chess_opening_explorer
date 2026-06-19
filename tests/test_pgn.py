@@ -26,6 +26,7 @@ def test_iter_occurrences_filters_by_player_color() -> None:
     moves = list(iter_occurrences(StringIO(PGN), "targetuser", color="black", max_fullmove=2))
 
     assert [move.move_san for move in moves] == ["Nf6", "e6"]
+    assert [move.line_san for move in moves] == ["1. d4 Nf6", "1. d4 Nf6 2. c4 e6"]
     assert all(move.color == "black" for move in moves)
 
 
@@ -47,4 +48,5 @@ def test_aggregate_occurrences_counts_repeated_positions() -> None:
     assert len(aggregates) == 1
     aggregate = next(iter(aggregates.values()))
     assert aggregate.move_san == "e4"
+    assert aggregate.line_san == "1. e4"
     assert aggregate.count == 2

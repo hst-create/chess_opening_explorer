@@ -177,11 +177,11 @@ These are estimates, not guarantees: Lichess API latency, network speed, cache w
 
 Markdown reports contain columns like:
 
-| Move Played | Times | Explorer Score | Best Alternative | Best Score | Delta | Impact | Explorer Games |
-|---|---:|---:|---|---:|---:|---:|---:|
-| ...Be7 | 24 | 46.0% | ...c5 | 55.0% | -9.0% | 2.16 | 123456 |
+| Line | Move Played | Times | Explorer Score | Best Alternative | Best Score | Delta | Impact | Explorer Games | Analysis |
+|---|---|---:|---:|---|---:|---:|---:|---:|---|
+| 1. e4 e5 2. Nf3 Nf6 3. d4 exd4 4. Nxd4 Be7 | Be7 | 24 | 46.0% | c5 | 55.0% | -9.0% | 2.16 | 123456 | Lichess |
 
-Score is computed from the perspective of the side you played: wins plus half draws divided by total games.
+The `Line` column shows the SAN move sequence through the repeated move, and `Analysis` links to a Lichess analysis board for the position before that move. Score is computed from the perspective of the side you played: wins plus half draws divided by total games.
 
 ## Notes
 

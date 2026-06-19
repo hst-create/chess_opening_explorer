@@ -32,6 +32,7 @@ def iter_occurrences(
             continue
 
         board = game.board()
+        played_moves: list[chess.Move] = []
         for move in game.mainline_moves():
             if board.fullmove_number > max_fullmove:
                 break
@@ -43,10 +44,12 @@ def iter_occurrences(
                     fen=fen,
                     move_uci=move.uci(),
                     move_san=san,
+                    line_san=game.board().variation_san([*played_moves, move]),
                     ply=board.ply() + 1,
                     color=player_color,
                 )
             board.push(move)
+            played_moves.append(move)
 
 
 def aggregate_occurrences(occurrences: Iterable[MoveOccurrence]) -> dict[tuple[str, str], MoveAggregate]:
@@ -54,7 +57,7 @@ def aggregate_occurrences(occurrences: Iterable[MoveOccurrence]) -> dict[tuple[s
     for occ in occurrences:
         key = (occ.fen, occ.move_uci)
         if key not in aggregates:
-            aggregates[key] = MoveAggregate(occ.fen, occ.move_uci, occ.move_san, occ.color)
+            aggregates[key] = MoveAggregate(occ.fen, occ.move_uci, occ.move_san, occ.color, line_san=occ.line_san)
         aggregates[key].add(occ)
     return aggregates
 
