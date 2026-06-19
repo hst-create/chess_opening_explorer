@@ -142,6 +142,22 @@ lichess-opening-analyzer \
 - `--cache`: SQLite cache path for Explorer API responses.
 - `--sort delta|impact`: sort by largest score deficit or by frequency × deficit.
 
+
+## Progress and runtime estimates
+
+By default, the analyzer now writes progress updates to stderr while it works. It announces the download and PGN parsing phases, reports how many unique opening move candidates were found, and then prints Lichess Explorer query progress with elapsed time and an estimated time remaining. Use `--quiet` if you only want the final summary.
+
+Runtime depends mostly on the number of repeated unique positions that pass `--min-own-occurrences`, because each one may need a Lichess Opening Explorer lookup. Cached positions are much faster on repeated runs. As a rough planning guide on a normal home connection:
+
+| Download / analyzed games | Typical repeated Explorer candidates | First uncached run | Cached rerun |
+|---:|---:|---:|---:|
+| 100 games | 10-50 | under 1 minute | a few seconds |
+| 1,000 games | 100-500 | 2-10 minutes | under 1 minute |
+| 5,000 games | 500-2,000 | 10-40 minutes | 1-5 minutes |
+| 10,000+ games | 1,000-4,000+ | 20-90+ minutes | a few minutes |
+
+These are estimates, not guarantees: Lichess API latency, network speed, cache warmth, `--max-fullmove`, `--color`, and `--min-own-occurrences` can change the totals substantially. If a run appears slow, check the `Explorer queries: current/total` line to see whether it is still advancing.
+
 ## Output
 
 Markdown reports contain columns like:

@@ -31,3 +31,21 @@ def test_analyze_moves_reports_worse_repeated_move() -> None:
     assert len(findings) == 1
     assert findings[0].best_alternative.san == "d4"
     assert round(findings[0].delta, 2) == -0.20
+
+
+def test_analyze_moves_reports_progress_for_repeated_candidates_only() -> None:
+    repeated = MoveAggregate("startpos", "e2e4", "e4", "white", count=5)
+    single = MoveAggregate("other", "g1f3", "Nf3", "white", count=1)
+    updates: list[tuple[int, int]] = []
+
+    analyze_moves(
+        {("startpos", "e2e4"): repeated, ("other", "g1f3"): single},
+        FakeClient(),  # type: ignore[arg-type]
+        3,
+        100,
+        10,
+        8,
+        progress_callback=updates.append,
+    )
+
+    assert updates == [(1, 1)]
