@@ -45,7 +45,41 @@ def test_analyze_moves_reports_progress_for_repeated_candidates_only() -> None:
         100,
         10,
         8,
-        progress_callback=updates.append,
+        progress_callback=lambda current, total: updates.append((current, total)),
     )
 
     assert updates == [(1, 1)]
+
+
+class CountingFakeClient(FakeClient):
+    def __init__(self) -> None:
+        self.requested_fens: list[str] = []
+
+    def get_position(self, fen: str):
+        self.requested_fens.append(fen)
+        return super().get_position(fen)
+
+
+def test_analyze_moves_queries_each_repeated_position_once() -> None:
+    first = MoveAggregate("startpos", "e2e4", "e4", "white", count=5)
+    second = MoveAggregate("startpos", "d2d4", "d4", "white", count=4)
+    other = MoveAggregate("other", "e2e4", "e4", "white", count=3)
+    client = CountingFakeClient()
+    updates: list[tuple[int, int]] = []
+
+    analyze_moves(
+        {
+            ("startpos", "e2e4"): first,
+            ("startpos", "d2d4"): second,
+            ("other", "e2e4"): other,
+        },
+        client,  # type: ignore[arg-type]
+        3,
+        100,
+        10,
+        8,
+        progress_callback=lambda current, total: updates.append((current, total)),
+    )
+
+    assert client.requested_fens == ["startpos", "other"]
+    assert updates == [(1, 2), (2, 2)]
