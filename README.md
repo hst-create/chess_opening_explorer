@@ -111,6 +111,21 @@ lichess-opening-analyzer \
 
 The command downloads recent games if `--pgn` is not supplied, parses them with `python-chess`, aggregates positions where you made a move in the first 10-12 moves, queries the Lichess Opening Explorer once per unique position, and writes a report.
 
+## Authenticated Lichess downloads
+
+Public game exports usually do not require authentication. If Lichess returns `401 Unauthorized` or `403 Forbidden`, create a Lichess personal access token with game-read access and either pass it directly or expose it as an environment variable:
+
+```bash
+export LICHESS_TOKEN=lip_your_token_here
+lichess-opening-analyzer --username your_lichess_name --max-games 1000 --color both
+```
+
+Or pass the token for one command:
+
+```bash
+lichess-opening-analyzer --username your_lichess_name --lichess-token lip_your_token_here --max-games 1000 --color both
+```
+
 ## Analyze an existing PGN export
 
 ```bash
