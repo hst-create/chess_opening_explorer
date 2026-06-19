@@ -9,6 +9,7 @@ class MoveOccurrence:
     fen: str
     move_uci: str
     move_san: str
+    line_san: str
     ply: int
     color: str
 
@@ -19,6 +20,7 @@ class MoveAggregate:
     move_uci: str
     move_san: str
     color: str
+    line_san: str = ""
     count: int = 0
     plies: list[int] = field(default_factory=list)
 
@@ -27,6 +29,8 @@ class MoveAggregate:
         self.plies.append(occurrence.ply)
         if len(occurrence.move_san) > len(self.move_san):
             self.move_san = occurrence.move_san
+        if len(occurrence.line_san) > len(self.line_san):
+            self.line_san = occurrence.line_san
 
 
 @dataclass(frozen=True)
