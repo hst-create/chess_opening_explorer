@@ -24,6 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-games", type=int, help="Maximum recent games to download from Lichess.")
     parser.add_argument("--since", help="Only download games since this ISO date, e.g. 2025-01-01.")
     parser.add_argument("--until", help="Only download games until this ISO date, e.g. 2026-01-01.")
+    parser.add_argument("--lichess-token", help="Lichess personal access token for downloading private/non-public games. Defaults to LICHESS_TOKEN.")
     parser.add_argument("--color", choices=["white", "black", "both"], default="both", help="Analyze only moves you played as this color.")
     parser.add_argument("--max-fullmove", type=int, default=12, help="Opening depth limit in full moves.")
     parser.add_argument("--min-own-occurrences", type=int, default=3, help="Minimum times you must have played the move.")
@@ -85,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.pgn is None:
         limit = f" up to {args.max_games:,} games" if args.max_games else " games"
         progress.message(f"Downloading{limit} for {args.username} to {pgn_path}...")
-        download_games(args.username, pgn_path, args.max_games, args.since, args.until)
+        download_games(args.username, pgn_path, args.max_games, args.since, args.until, args.lichess_token)
 
     progress.message(f"Parsing {pgn_path} through fullmove {args.max_fullmove}...")
     aggregates = aggregate_pgn(pgn_path, args.username, args.color, args.max_fullmove)
