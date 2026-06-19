@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import sys
+import time
 from pathlib import Path
 
 from .analysis import analyze_moves
@@ -11,6 +13,7 @@ from .report import write_csv, write_markdown
 
 DEFAULT_RATINGS = [1800, 2000, 2200]
 DEFAULT_SPEEDS = ["rapid", "classical"]
+PROGRESS_INTERVAL_SECONDS = 2.0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,16 +37,64 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--format", choices=["markdown", "csv"], default="markdown", help="Report format.")
     parser.add_argument("--sort", choices=["delta", "impact"], default="delta", help="Sort by score deficit or frequency-weighted impact.")
     parser.add_argument("--max-alternatives", type=int, default=8, help="Only consider this many best-scoring common moves as alternatives.")
+    parser.add_argument("--quiet", action="store_true", help="Suppress progress output and only print the final summary.")
     return parser
+
+
+class ProgressReporter:
+    def __init__(self, enabled: bool = True) -> None:
+        self.enabled = enabled
+        self.started_at = time.monotonic()
+        self.last_update = 0.0
+
+    def message(self, text: str) -> None:
+        if self.enabled:
+            print(text, file=sys.stderr, flush=True)
+
+    def explorer_update(self, current: int, total: int) -> None:
+        if not self.enabled:
+            return
+        now = time.monotonic()
+        if current != total and now - self.last_update < PROGRESS_INTERVAL_SECONDS:
+            return
+        self.last_update = now
+        elapsed = now - self.started_at
+        percent = (current / total * 100) if total else 100.0
+        eta = _format_duration((elapsed / current) * (total - current)) if current else "unknown"
+        print(
+            f"Explorer queries: {current}/{total} ({percent:.1f}%) elapsed {_format_duration(elapsed)}, ETA {eta}",
+            file=sys.stderr,
+            flush=True,
+        )
+
+
+def _format_duration(seconds: float) -> str:
+    seconds = max(0, int(seconds))
+    minutes, remaining_seconds = divmod(seconds, 60)
+    hours, remaining_minutes = divmod(minutes, 60)
+    if hours:
+        return f"{hours}h {remaining_minutes}m"
+    if remaining_minutes:
+        return f"{remaining_minutes}m {remaining_seconds}s"
+    return f"{remaining_seconds}s"
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    progress = ProgressReporter(enabled=not args.quiet)
     pgn_path = args.pgn or args.download_to
     if args.pgn is None:
+        limit = f" up to {args.max_games:,} games" if args.max_games else " games"
+        progress.message(f"Downloading{limit} for {args.username} to {pgn_path}...")
         download_games(args.username, pgn_path, args.max_games, args.since, args.until, args.lichess_token)
 
+    progress.message(f"Parsing {pgn_path} through fullmove {args.max_fullmove}...")
     aggregates = aggregate_pgn(pgn_path, args.username, args.color, args.max_fullmove)
+    repeated_candidates = sum(1 for aggregate in aggregates.values() if aggregate.count >= args.min_own_occurrences)
+    progress.message(
+        f"Found {len(aggregates):,} unique move candidates; {repeated_candidates:,} meet "
+        f"--min-own-occurrences {args.min_own_occurrences}."
+    )
     cache = ExplorerCache(args.cache)
     try:
         client = LichessExplorerClient(cache, args.speeds, args.ratings)
@@ -54,6 +105,7 @@ def main(argv: list[str] | None = None) -> int:
             min_explorer_games=args.min_explorer_games,
             min_move_games=args.min_move_games,
             max_alternatives=args.max_alternatives,
+            progress_callback=progress.explorer_update,
         )
     finally:
         cache.close()
@@ -62,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
         write_csv(findings, args.output, args.sort)
     else:
         write_markdown(findings, args.output, args.sort)
-    print(f"Analyzed {len(aggregates)} repeated move candidates; wrote {len(findings)} findings to {args.output}")
+    print(f"Analyzed {len(aggregates)} unique move candidates; wrote {len(findings)} findings to {args.output}")
     return 0
 
 

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from .explorer import LichessExplorerClient
 from .models import ExplorerMove, MoveAggregate
+
+ProgressCallback = Callable[[int, int], None]
 
 
 @dataclass(frozen=True)
@@ -30,12 +33,15 @@ def analyze_moves(
     min_explorer_games: int,
     min_move_games: int,
     max_alternatives: int,
+    progress_callback: ProgressCallback | None = None,
 ) -> list[Finding]:
     findings: list[Finding] = []
-    for aggregate in aggregates.values():
-        if aggregate.count < min_own_occurrences:
-            continue
+    repeated_aggregates = [aggregate for aggregate in aggregates.values() if aggregate.count >= min_own_occurrences]
+    total = len(repeated_aggregates)
+    for index, aggregate in enumerate(repeated_aggregates, start=1):
         payload = client.get_position(aggregate.fen)
+        if progress_callback is not None:
+            progress_callback(index, total)
         explorer_total = int(payload.get("white", 0)) + int(payload.get("draws", 0)) + int(payload.get("black", 0))
         if explorer_total < min_explorer_games:
             continue
