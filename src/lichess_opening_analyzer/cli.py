@@ -28,6 +28,19 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--color", choices=["white", "black", "both"], default="both", help="Analyze only moves you played as this color.")
     parser.add_argument("--max-fullmove", type=int, default=12, help="Opening depth limit in full moves.")
     parser.add_argument("--min-own-occurrences", type=int, default=3, help="Minimum times you must have played the move.")
+    parser.add_argument("--min-ply", type=int, default=4, help="Ignore moves before this ply. The default 4 skips the first three half-moves.")
+    parser.add_argument(
+        "--include-line",
+        action="append",
+        default=[],
+        help="Only report lines whose SAN sequence contains this text. Repeat to allow multiple repertoire branches.",
+    )
+    parser.add_argument(
+        "--exclude-line",
+        action="append",
+        default=[],
+        help="Do not report lines whose SAN sequence contains this text. Repeat to hide lines you no longer play.",
+    )
     parser.add_argument("--min-explorer-games", type=int, default=1000, help="Minimum total Explorer games for the position.")
     parser.add_argument("--min-move-games", type=int, default=100, help="Minimum Explorer games for each compared move.")
     parser.add_argument("--ratings", nargs="+", type=int, default=DEFAULT_RATINGS, help="Lichess Explorer rating buckets, e.g. 1800 2000 2200.")
@@ -93,7 +106,8 @@ def main(argv: list[str] | None = None) -> int:
     repeated_candidates = sum(1 for aggregate in aggregates.values() if aggregate.count >= args.min_own_occurrences)
     progress.message(
         f"Found {len(aggregates):,} unique move candidates; {repeated_candidates:,} meet "
-        f"--min-own-occurrences {args.min_own_occurrences}."
+        f"--min-own-occurrences {args.min_own_occurrences}. Moves before ply {args.min_ply} and "
+        "line filters are applied before Explorer queries."
     )
     cache = ExplorerCache(args.cache)
     try:
@@ -106,6 +120,9 @@ def main(argv: list[str] | None = None) -> int:
             min_move_games=args.min_move_games,
             max_alternatives=args.max_alternatives,
             progress_callback=progress.explorer_update,
+            min_ply=args.min_ply,
+            include_lines=args.include_line,
+            exclude_lines=args.exclude_line,
         )
     finally:
         cache.close()

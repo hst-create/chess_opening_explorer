@@ -35,9 +35,16 @@ def analyze_moves(
     min_move_games: int,
     max_alternatives: int,
     progress_callback: ProgressCallback | None = None,
+    min_ply: int = 4,
+    include_lines: list[str] | None = None,
+    exclude_lines: list[str] | None = None,
 ) -> list[Finding]:
     findings: list[Finding] = []
-    repeated_aggregates = [aggregate for aggregate in aggregates.values() if aggregate.count >= min_own_occurrences]
+    repeated_aggregates = [
+        aggregate
+        for aggregate in aggregates.values()
+        if aggregate.count >= min_own_occurrences and _is_allowed_line(aggregate, min_ply, include_lines, exclude_lines)
+    ]
     unique_fens = list(dict.fromkeys(aggregate.fen for aggregate in repeated_aggregates))
     total = len(unique_fens)
     explorer_payloads: dict[str, dict[str, Any]] = {}
@@ -64,3 +71,25 @@ def analyze_moves(
         if best.uci != played.uci and best_score > played_score:
             findings.append(Finding(aggregate, explorer_total, played_score, best, best_score))
     return sorted(findings, key=lambda item: (item.best_score - item.played_score, item.impact), reverse=True)
+
+
+def _is_allowed_line(
+    aggregate: MoveAggregate, min_ply: int, include_lines: list[str] | None, exclude_lines: list[str] | None
+) -> bool:
+    first_seen_ply = min(aggregate.plies) if aggregate.plies else _infer_ply(aggregate.line_san)
+    if first_seen_ply < min_ply:
+        return False
+    normalized_line = aggregate.line_san.casefold()
+    includes = _normalize_patterns(include_lines)
+    excludes = _normalize_patterns(exclude_lines)
+    if includes and not any(pattern in normalized_line for pattern in includes):
+        return False
+    return not any(pattern in normalized_line for pattern in excludes)
+
+
+def _normalize_patterns(patterns: list[str] | None) -> list[str]:
+    return [pattern.casefold().strip() for pattern in patterns or [] if pattern.strip()]
+
+
+def _infer_ply(line_san: str) -> int:
+    return sum(1 for token in line_san.split() if not token.rstrip('.').isdigit() and token != '...')
