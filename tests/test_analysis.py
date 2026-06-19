@@ -24,7 +24,7 @@ class FakeClient:
 
 
 def test_analyze_moves_reports_worse_repeated_move() -> None:
-    aggregate = MoveAggregate("startpos", "e2e4", "e4", "white", count=5)
+    aggregate = MoveAggregate("startpos", "e2e4", "e4", "white", "1. e4", count=5, plies=[4, 4, 4, 4, 4])
 
     findings = analyze_moves({("startpos", "e2e4"): aggregate}, FakeClient(), 3, 100, 10, 8)  # type: ignore[arg-type]
 
@@ -34,8 +34,8 @@ def test_analyze_moves_reports_worse_repeated_move() -> None:
 
 
 def test_analyze_moves_reports_progress_for_repeated_candidates_only() -> None:
-    repeated = MoveAggregate("startpos", "e2e4", "e4", "white", count=5)
-    single = MoveAggregate("other", "g1f3", "Nf3", "white", count=1)
+    repeated = MoveAggregate("startpos", "e2e4", "e4", "white", "1. e4", count=5, plies=[4, 4, 4, 4, 4])
+    single = MoveAggregate("other", "g1f3", "Nf3", "white", "1. Nf3", count=1, plies=[4])
     updates: list[tuple[int, int]] = []
 
     analyze_moves(
@@ -61,9 +61,9 @@ class CountingFakeClient(FakeClient):
 
 
 def test_analyze_moves_queries_each_repeated_position_once() -> None:
-    first = MoveAggregate("startpos", "e2e4", "e4", "white", count=5)
-    second = MoveAggregate("startpos", "d2d4", "d4", "white", count=4)
-    other = MoveAggregate("other", "e2e4", "e4", "white", count=3)
+    first = MoveAggregate("startpos", "e2e4", "e4", "white", "1. e4", count=5, plies=[4, 4, 4, 4, 4])
+    second = MoveAggregate("startpos", "d2d4", "d4", "white", "1. d4", count=4, plies=[4, 4, 4, 4])
+    other = MoveAggregate("other", "e2e4", "e4", "white", "1. e4", count=3, plies=[4, 4, 4])
     client = CountingFakeClient()
     updates: list[tuple[int, int]] = []
 
@@ -83,3 +83,34 @@ def test_analyze_moves_queries_each_repeated_position_once() -> None:
 
     assert client.requested_fens == ["startpos", "other"]
     assert updates == [(1, 2), (2, 2)]
+
+
+def test_analyze_moves_ignores_early_plies_by_default() -> None:
+    aggregate = MoveAggregate("startpos", "e2e4", "e4", "white", "1. e4", count=5, plies=[1, 1, 1, 1, 1])
+
+    findings = analyze_moves({("startpos", "e2e4"): aggregate}, FakeClient(), 3, 100, 10, 8)  # type: ignore[arg-type]
+
+    assert findings == []
+
+
+def test_analyze_moves_filters_lines() -> None:
+    sicilian = MoveAggregate(
+        "startpos", "e2e4", "e4", "white", "1. e4 c5 2. Nf3 d6 3. d4", count=5, plies=[5, 5, 5, 5, 5]
+    )
+    caro = MoveAggregate(
+        "caro", "e2e4", "e4", "white", "1. e4 c6 2. d4 d5 3. Nc3", count=5, plies=[5, 5, 5, 5, 5]
+    )
+
+    findings = analyze_moves(
+        {("startpos", "e2e4"): sicilian, ("caro", "e2e4"): caro},
+        FakeClient(),  # type: ignore[arg-type]
+        3,
+        100,
+        10,
+        8,
+        include_lines=["1. e4"],
+        exclude_lines=["c5 2. Nf3 d6 3. d4"],
+    )
+
+    assert len(findings) == 1
+    assert findings[0].move.fen == "caro"

@@ -109,7 +109,20 @@ lichess-opening-analyzer \
   --output reports/opening_leaks.md
 ```
 
-The command downloads recent games if `--pgn` is not supplied, parses them with `python-chess`, aggregates positions where you made a move in the first 10-12 moves, queries the Lichess Opening Explorer once per unique position, and writes a report.
+The command downloads recent games if `--pgn` is not supplied, parses them with `python-chess`, aggregates positions where you made a move in the first 10-12 moves, skips the first three half-moves by default, queries the Lichess Opening Explorer once per unique filtered position, and writes a report.
+
+To reuse games you already downloaded instead of fetching again, pass the saved PGN with `--pgn` and omit `--max-games` unless you are downloading a new file:
+
+```bash
+lichess-opening-analyzer \
+  --username your_lichess_name \
+  --pgn data/games.pgn \
+  --color both \
+  --ratings 1800 2000 2200 \
+  --speeds rapid classical \
+  --sort impact \
+  --output reports/opening_leaks.md
+```
 
 ## Authenticated Lichess access
 
@@ -150,12 +163,26 @@ lichess-opening-analyzer \
 - `--since` / `--until`: limit downloaded games by ISO date.
 - `--max-fullmove`: default `12`, keeping the analysis in the opening phase.
 - `--min-own-occurrences`: default `3`, so one-off moves are ignored.
+- `--min-ply`: default `4`, so the first three half-moves are ignored before querying Explorer. Use `--min-ply 1` to include every move.
+- `--include-line`: only report SAN lines containing the given text. Repeat it to whitelist multiple repertoire branches.
+- `--exclude-line`: hide SAN lines containing the given text. Repeat it to blacklist stale repertoire branches such as an opening you no longer play.
 - `--min-explorer-games`: default `1000`, minimum Explorer database games for the position.
 - `--min-move-games`: default `100`, minimum Explorer games for each move being compared.
 - `--ratings`: Lichess Explorer rating buckets, such as `1800 2000 2200`.
 - `--speeds`: Lichess speed filters, such as `rapid classical`.
 - `--cache`: SQLite cache path for Explorer API responses.
 - `--sort delta|impact`: sort by largest score deficit or by frequency × deficit.
+
+Line filters match text in the report's SAN `Line` value, case-insensitively. For example, to hide Open Sicilian structures while keeping other `1. e4` openings:
+
+```bash
+lichess-opening-analyzer \
+  --username your_lichess_name \
+  --pgn data/games.pgn \
+  --include-line "1. e4" \
+  --exclude-line "c5 2. Nf3 d6 3. d4" \
+  --output reports/e4_without_open_sicilian.md
+```
 
 
 ## Progress and runtime estimates
