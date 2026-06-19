@@ -7,7 +7,7 @@ name = "lichess-opening-analyzer"
 version = "0.1.0"
 description = "Find repeated opening moves that underperform common Lichess Explorer alternatives."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 dependencies = [
   "python-chess>=1.999",
   "requests>=2.31",

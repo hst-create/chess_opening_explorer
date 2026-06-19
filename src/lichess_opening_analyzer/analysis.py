@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Dict, List, Tuple
 
 from .explorer import LichessExplorerClient
 from .models import ExplorerMove, MoveAggregate
@@ -24,14 +25,14 @@ class Finding:
 
 
 def analyze_moves(
-    aggregates: dict[tuple[str, str], MoveAggregate],
+    aggregates: Dict[Tuple[str, str], MoveAggregate],
     client: LichessExplorerClient,
     min_own_occurrences: int,
     min_explorer_games: int,
     min_move_games: int,
     max_alternatives: int,
-) -> list[Finding]:
-    findings: list[Finding] = []
+) -> List[Finding]:
+    findings: List[Finding] = []
     for aggregate in aggregates.values():
         if aggregate.count < min_own_occurrences:
             continue

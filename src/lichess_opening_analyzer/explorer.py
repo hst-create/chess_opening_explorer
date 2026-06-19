@@ -5,7 +5,7 @@ import json
 import sqlite3
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 import requests
 
@@ -21,11 +21,11 @@ class ExplorerCache:
             "CREATE TABLE IF NOT EXISTS explorer_cache (cache_key TEXT PRIMARY KEY, response TEXT NOT NULL, created_at INTEGER NOT NULL)"
         )
 
-    def get(self, key: str) -> dict[str, Any] | None:
+    def get(self, key: str) -> Optional[Dict[str, Any]]:
         row = self.conn.execute("SELECT response FROM explorer_cache WHERE cache_key = ?", (key,)).fetchone()
         return json.loads(row[0]) if row else None
 
-    def set(self, key: str, payload: dict[str, Any]) -> None:
+    def set(self, key: str, payload: Dict[str, Any]) -> None:
         self.conn.execute(
             "REPLACE INTO explorer_cache(cache_key, response, created_at) VALUES (?, ?, ?)",
             (key, json.dumps(payload), int(time.time())),
@@ -42,8 +42,8 @@ class LichessExplorerClient:
     def __init__(
         self,
         cache: ExplorerCache,
-        speeds: list[str],
-        ratings: list[int],
+        speeds: List[str],
+        ratings: List[int],
         top_games: int = 0,
         recent_games: int = 0,
         timeout: int = 20,
@@ -57,8 +57,8 @@ class LichessExplorerClient:
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": "lichess-opening-analyzer/0.1"})
 
-    def get_position(self, fen: str) -> dict[str, Any]:
-        params: dict[str, Any] = {
+    def get_position(self, fen: str) -> Dict[str, Any]:
+        params: Dict[str, Any] = {
             "fen": fen,
             "speeds": ",".join(self.speeds),
             "ratings": ",".join(str(r) for r in self.ratings),
@@ -76,10 +76,10 @@ class LichessExplorerClient:
         return payload
 
     @staticmethod
-    def moves(payload: dict[str, Any]) -> list[ExplorerMove]:
+    def moves(payload: Dict[str, Any]) -> List[ExplorerMove]:
         return [ExplorerMove.from_api(move) for move in payload.get("moves", [])]
 
     @staticmethod
-    def _cache_key(params: dict[str, Any]) -> str:
+    def _cache_key(params: Dict[str, Any]) -> str:
         encoded = json.dumps(params, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(encoded.encode()).hexdigest()
