@@ -97,7 +97,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     cache = ExplorerCache(args.cache)
     try:
-        client = LichessExplorerClient(cache, args.speeds, args.ratings)
+        client = LichessExplorerClient(cache, args.speeds, args.ratings, token=args.lichess_token)
         findings = analyze_moves(
             aggregates,
             client,

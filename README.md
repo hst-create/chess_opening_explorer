@@ -111,16 +111,16 @@ lichess-opening-analyzer \
 
 The command downloads recent games if `--pgn` is not supplied, parses them with `python-chess`, aggregates positions where you made a move in the first 10-12 moves, queries the Lichess Opening Explorer once per unique position, and writes a report.
 
-## Authenticated Lichess downloads
+## Authenticated Lichess access
 
-Public game exports usually do not require authentication. If Lichess returns `401 Unauthorized` or `403 Forbidden`, create a Lichess personal access token with game-read access and either pass it directly or expose it as an environment variable:
+Public game exports usually do not require authentication, but the Lichess Opening Explorer requires authentication. If Lichess returns `401 Unauthorized` or `403 Forbidden` while downloading games or querying Explorer, create a Lichess personal access token and either pass it directly or expose it as an environment variable:
 
 ```bash
 export LICHESS_TOKEN=lip_your_token_here
 lichess-opening-analyzer --username your_lichess_name --max-games 1000 --color both
 ```
 
-Or pass the token for one command:
+Or pass the token for one command. The same `--lichess-token` value is used for both game downloads and Opening Explorer lookups:
 
 ```bash
 lichess-opening-analyzer --username your_lichess_name --lichess-token lip_your_token_here --max-games 1000 --color both
@@ -186,5 +186,5 @@ Score is computed from the perspective of the side you played: wins plus half dr
 ## Notes
 
 - The tool intentionally limits analysis to early moves because deeper Explorer results increasingly reflect middlegame skill rather than opening move quality.
-- API responses are cached locally in SQLite so repeated runs avoid unnecessary Lichess Opening Explorer requests.
+- API responses are cached locally in SQLite so repeated runs avoid unnecessary Lichess Opening Explorer requests. Opening Explorer requests use `--lichess-token` or `LICHESS_TOKEN` when provided.
 - Future versions could add Stockfish evaluation, repertoire branch grouping, and visual summaries.
